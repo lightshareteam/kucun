@@ -6,6 +6,8 @@ django.setup()
 
 from inventory.models import Warehouse, StockMovement
 
+# 这个是测试
+
 def fix_warehouses():
     # 打印当前仓库
     print("当前仓库:")
