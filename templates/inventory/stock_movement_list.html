@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2>库存变动记录</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'inventory:export_stock_movements' %}" class="btn btn-info me-2">
+            <i class="fas fa-file-export"></i> 导出数据
+        </a>
+        <a href="{% url 'inventory:stock_movement_import' %}" class="btn btn-success me-2">
+            <i class="fas fa-file-import"></i> 批量导入
+        </a>
+        <a href="{% url 'inventory:stock_movement_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 新增记录
+        </a>
+        <button id="delete-selected" class="btn btn-danger ms-2" disabled>
+            <i class="fas fa-trash"></i> 删除所选
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form id="movement-form" method="post" action="{% url 'inventory:stock_movement_batch_delete' %}">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="select-all" class="form-check-input">
+                            </th>
+                            <th>日期</th>
+                            <th>产品</th>
+                            <th>仓库</th>
+                            <th>类型</th>
+                            <th>数量</th>
+                            <th>备注</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movement in movements %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selected_movements" value="{{ movement.id }}" class="form-check-input movement-checkbox">
+                            </td>
+                            <td>{{ movement.date|date:"Y-m-d" }}</td>
+                            <td>{{ movement.product.name }} (店铺SKU: {{ movement.product.sku }})</td>
+                            <td>{{ movement.warehouse.name }}</td>
+                            <td>
+                                {% if movement.movement_type == 'IN' %}
+                                <span class="badge bg-success">入库</span>
+                                {% else %}
+                                <span class="badge bg-danger">出库</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ movement.quantity }}</td>
+                            <td>{{ movement.notes|default:"-" }}</td>
+                            <td>
+                                <a href="{% url 'inventory:stock_movement_delete' movement.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除这条库存变动记录吗？')">
+                                    <i class="fas fa-trash"></i> 删除
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">暂无库存变动记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const movementCheckboxes = document.querySelectorAll('.movement-checkbox');
+        const deleteSelectedButton = document.getElementById('delete-selected');
+        const movementForm = document.getElementById('movement-form');
+
+        // 全选/取消全选
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            movementCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateDeleteButtonState();
+        });
+
+        // 单个勾选框变化时更新删除按钮状态
+        movementCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateDeleteButtonState);
+        });
+
+        // 更新删除按钮状态
+        function updateDeleteButtonState() {
+            const checkedCount = document.querySelectorAll('.movement-checkbox:checked').length;
+            deleteSelectedButton.disabled = checkedCount === 0;
+        }
+
+        // 删除所选按钮点击事件
+        deleteSelectedButton.addEventListener('click', function() {
+            if (confirm('确定要删除所选库存变动记录吗？这可能会影响产品的库存数量。')) {
+                movementForm.submit();
+            }
+        });
+    });
+</script>
+{% endblock %} 

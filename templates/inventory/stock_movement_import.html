@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>导入库存变动</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="file" class="form-label">选择Excel文件</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">导入</button>
+                        <a href="{% url 'inventory:stock_movement_list' %}" class="btn btn-secondary">返回</a>
+                        <a href="{% url 'inventory:download_stock_movement_template' %}" class="btn btn-success">
+                            <i class="fas fa-download"></i> 下载导入模板
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">导入说明</h5>
+            </div>
+            <div class="card-body">
+                <ol class="list-unstyled">
+                    <li>1. 下载导入模板</li>
+                    <li>2. 按模板格式填写数据：</li>
+                    <ul class="ps-3">
+                        <li>日期格式：YYYY-MM-DD</li>
+                        <li>店铺SKU必须是已存在的产品</li>
+                        <li>数量必须为正整数</li>
+                        <li>类型必须为IN（入库）或OUT（出库）</li>
+                        <li>备注为可选项</li>
+                    </ul>
+                    <li>3. 选择填好的Excel文件</li>
+                    <li>4. 点击"导入"按钮</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

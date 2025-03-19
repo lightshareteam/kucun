@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}确认入库 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">确认入库</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'inventory:incoming_stock_list' %}">入库途中产品</a></li>
+        <li class="breadcrumb-item active">确认入库</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-check-circle me-1"></i>
+            确认入库
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4 class="alert-heading">确认操作</h4>
+                <p>您确定要将以下入库途中产品确认入库吗？此操作将创建相应的库存变动记录，并更新产品库存。</p>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">入库途中产品详情</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">产品SKU</th>
+                            <td>{{ incoming_stock.product.sku }}</td>
+                        </tr>
+                        <tr>
+                            <th>产品名称</th>
+                            <td>{{ incoming_stock.product.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>仓库</th>
+                            <td>{{ incoming_stock.warehouse.name }} ({{ incoming_stock.warehouse.code }})</td>
+                        </tr>
+                        <tr>
+                            <th>数量</th>
+                            <td>{{ incoming_stock.quantity }}</td>
+                        </tr>
+                        <tr>
+                            <th>预计入仓时间</th>
+                            <td>{{ incoming_stock.expected_arrival_date|date:"Y-m-d" }}</td>
+                        </tr>
+                        <tr>
+                            <th>状态</th>
+                            <td>{{ incoming_stock.status }}</td>
+                        </tr>
+                        <tr>
+                            <th>备注</th>
+                            <td>{{ incoming_stock.notes|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>创建时间</th>
+                            <td>{{ incoming_stock.created_at|date:"Y-m-d H:i:s" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">确认入库</button>
+                    <a href="{% url 'inventory:incoming_stock_list' %}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>{% if form.instance.pk %}编辑仓库{% else %}新增仓库{% endif %}</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary">返回</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">帮助信息</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>仓库代码:</strong> 用于唯一标识仓库的编码</li>
+                    <li><strong>仓库名称:</strong> 仓库的显示名称</li>
+                    <li><strong>地址:</strong> 仓库的详细地址（可选）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

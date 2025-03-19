@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+<style>
+    .select2-container--bootstrap-5 .select2-selection {
+        height: auto;
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>新增库存变动</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a href="{% url 'inventory:stock_movement_list' %}" class="btn btn-secondary">返回</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">帮助信息</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><strong>产品(店铺SKU):</strong> 选择要操作的产品，可输入关键字搜索</li>
+                    <li><strong>类型:</strong> 选择入库或出库</li>
+                    <li><strong>数量:</strong> 输入变动数量（必须大于0）</li>
+                    <li><strong>日期:</strong> 变动发生的日期</li>
+                    <li><strong>备注:</strong> 可选的附加说明</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#id_product').select2({
+            theme: 'bootstrap-5',
+            placeholder: '输入店铺SKU搜索产品...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{% url "inventory:search_products" %}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        term: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+</script>
+{% endblock %} 

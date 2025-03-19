@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.id %}编辑{% else %}添加{% endif %}入库途中产品 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{% if form.instance.id %}编辑{% else %}添加{% endif %}入库途中产品</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'inventory:incoming_stock_list' %}">入库途中产品</a></li>
+        <li class="breadcrumb-item active">{% if form.instance.id %}编辑{% else %}添加{% endif %}</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-edit me-1"></i>
+            {% if form.instance.id %}编辑{% else %}添加{% endif %}入库途中产品
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.product|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.warehouse|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.quantity|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.expected_arrival_date|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        {{ form.notes|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'inventory:incoming_stock_list' %}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

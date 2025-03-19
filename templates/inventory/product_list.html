@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load inventory_filters %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2>产品列表</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'inventory:historical_stock' %}" class="btn btn-secondary">
+            <i class="fas fa-history"></i> 历史库存查询
+        </a>
+        <a href="{% url 'inventory:product_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 新增产品
+        </a>
+        <a href="{% url 'inventory:import_products' %}" class="btn btn-success">
+            <i class="fas fa-file-import"></i> 导入产品
+        </a>
+        <a href="{% url 'inventory:export_products' %}" class="btn btn-info">
+            <i class="fas fa-file-export"></i> 导出产品
+        </a>
+        <button id="delete-selected" class="btn btn-danger" disabled>
+            <i class="fas fa-trash"></i> 删除所选
+        </button>
+    </div>
+</div>
+
+<!-- 搜索表单 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{% url 'inventory:product_list' %}" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="搜索店铺SKU或产品SKU..." value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i> 搜索
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if search_query %}
+                <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> 清除搜索
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if search_query %}
+        <div class="alert alert-info">
+            搜索结果: "{{ search_query }}" - 找到 {{ products|length }} 个产品
+        </div>
+        {% endif %}
+        <form id="product-form" method="post" action="{% url 'inventory:product_batch_delete' %}">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="select-all" class="form-check-input">
+                            </th>
+                            <th>店铺SKU</th>
+                            <th>FNSKU</th>
+                            <th>产品SKU</th>
+                            <th>重量(lb)</th>
+                            <th>尺寸(inch)</th>
+                            {% for warehouse in warehouses %}
+                            <th>{{ warehouse.name }}</th>
+                            {% endfor %}
+                            <th>总库存</th>
+                            {% if ga_warehouse %}
+                            <th>GA在途</th>
+                            {% endif %}
+                            {% if ca_warehouse %}
+                            <th>CA在途</th>
+                            {% endif %}
+                            <th>生产订单</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selected_products" value="{{ product.id }}" class="form-check-input product-checkbox">
+                            </td>
+                            <td>{{ product.sku }}</td>
+                            <td>{{ product.fnsku }}</td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.weight }}</td>
+                            <td>{{ product.length }} × {{ product.width }} × {{ product.height }}</td>
+                            {% for warehouse in warehouses %}
+                            <td>{{ product_warehouse_stock|get_item:product.id|get_item:warehouse.id }}</td>
+                            {% endfor %}
+                            <td>{{ product.total_stock }}</td>
+                            {% if ga_warehouse %}
+                            <td>{{ product_incoming_stock|get_item:product.id|get_item:'GA' }}</td>
+                            {% endif %}
+                            {% if ca_warehouse %}
+                            <td>{{ product_incoming_stock|get_item:product.id|get_item:'CA' }}</td>
+                            {% endif %}
+                            <td>{{ product_production_orders|get_item:product.id }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'inventory:product_edit' product.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> 编辑
+                                    </a>
+                                    <a href="{% url 'inventory:product_delete' product.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除产品 {{ product.name }} 吗？')">
+                                        <i class="fas fa-trash"></i> 删除
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{{ 9|add:warehouses|length }}" class="text-center">暂无产品数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const productCheckboxes = document.querySelectorAll('.product-checkbox');
+        const deleteSelectedButton = document.getElementById('delete-selected');
+        const productForm = document.getElementById('product-form');
+
+        // 全选/取消全选
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            productCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateDeleteButtonState();
+        });
+
+        // 单个勾选框变化时更新删除按钮状态
+        productCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateDeleteButtonState);
+        });
+
+        // 更新删除按钮状态
+        function updateDeleteButtonState() {
+            const checkedCount = document.querySelectorAll('.product-checkbox:checked').length;
+            deleteSelectedButton.disabled = checkedCount === 0;
+        }
+
+        // 删除所选按钮点击事件
+        deleteSelectedButton.addEventListener('click', function() {
+            if (confirm('确定要删除所选产品吗？')) {
+                productForm.submit();
+            }
+        });
+    });
+</script>
+{% endblock %} 

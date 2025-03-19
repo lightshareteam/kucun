@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}删除入库途中产品 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">删除入库途中产品</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'inventory:incoming_stock_list' %}">入库途中产品</a></li>
+        <li class="breadcrumb-item active">删除</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-trash me-1"></i>
+            确认删除
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">警告！</h4>
+                <p>您确定要删除以下入库途中产品记录吗？此操作不可撤销。</p>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">入库途中产品详情</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">产品SKU</th>
+                            <td>{{ incoming_stock.product.sku }}</td>
+                        </tr>
+                        <tr>
+                            <th>仓库</th>
+                            <td>{{ incoming_stock.warehouse.name }} ({{ incoming_stock.warehouse.code }})</td>
+                        </tr>
+                        <tr>
+                            <th>数量</th>
+                            <td>{{ incoming_stock.quantity }}</td>
+                        </tr>
+                        <tr>
+                            <th>预计入仓时间</th>
+                            <td>{{ incoming_stock.expected_arrival_date|date:"Y-m-d" }}</td>
+                        </tr>
+                        <tr>
+                            <th>状态</th>
+                            <td>{{ incoming_stock.status }}</td>
+                        </tr>
+                        <tr>
+                            <th>备注</th>
+                            <td>{{ incoming_stock.notes|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>创建时间</th>
+                            <td>{{ incoming_stock.created_at|date:"Y-m-d H:i:s" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                    <a href="{% url 'inventory:incoming_stock_list' %}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

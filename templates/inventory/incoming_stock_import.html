@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}导入入库途中产品 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">导入入库途中产品</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">首页</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'inventory:incoming_stock_list' %}">入库途中产品</a></li>
+        <li class="breadcrumb-item active">导入</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-file-import me-1"></i>
+            导入入库途中产品
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-4">
+                <h4 class="alert-heading">导入说明</h4>
+                <p>请按照以下格式准备Excel文件：</p>
+                <ul>
+                    <li><strong>店铺SKU</strong>：必填，必须是系统中已存在的产品SKU</li>
+                    <li><strong>仓库代码</strong>：必填，必须是系统中已存在的仓库代码</li>
+                    <li><strong>数量</strong>：必填，必须是正整数</li>
+                    <li><strong>预计入仓时间(YYYY-MM-DD)</strong>：必填，格式为YYYY-MM-DD</li>
+                    <li><strong>备注(可选)</strong>：选填，可以添加相关说明</li>
+                </ul>
+                <p>您可以<a href="{% url 'inventory:download_incoming_stock_template' %}" class="alert-link">下载导入模板</a>来确保格式正确。</p>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="file" class="form-label">选择Excel文件</label>
+                    <input type="file" class="form-control" id="file" name="file" accept=".xlsx, .xls" required>
+                    <div class="form-text">支持.xlsx和.xls格式</div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">上传并导入</button>
+                    <a href="{% url 'inventory:incoming_stock_list' %}" class="btn btn-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

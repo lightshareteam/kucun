@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}入库途中产品 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">入库途中产品</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">首页</a></li>
+        <li class="breadcrumb-item active">入库途中产品</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">入库途中产品列表</h5>
+            <div>
+                <form id="batchForm" method="post" action="{% url 'inventory:incoming_stock_batch_action' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="actionType" value="">
+                    
+                    <a href="{% url 'inventory:import_incoming_stock' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-file-import"></i> 批量导入
+                    </a>
+                    <a href="{% url 'inventory:download_incoming_stock_template' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-download"></i> 下载模板
+                    </a>
+                    <a href="{% url 'inventory:export_incoming_stock' %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-file-export"></i> 导出数据
+                    </a>
+                    <a href="{% url 'inventory:incoming_stock_create' %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> 添加记录
+                    </a>
+                    <button type="button" id="batchDeleteBtn" class="btn btn-danger btn-sm" disabled data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">
+                        <i class="fas fa-trash"></i> 批量删除
+                    </button>
+                    <button type="button" id="batchApproveBtn" class="btn btn-warning btn-sm" disabled data-bs-toggle="modal" data-bs-target="#approveConfirmModal">
+                        <i class="fas fa-check"></i> 批量确认入库
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="incoming-stock-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll">
+                            </th>
+                            <th>产品SKU</th>
+                            <th>仓库</th>
+                            <th>数量</th>
+                            <th>预计到达日期</th>
+                            <th>备注</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in incoming_stock_list %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="item-checkbox" value="{{ item.id }}">
+                            </td>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.warehouse.code }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.expected_arrival_date|date:"Y-m-d" }}</td>
+                            <td>{{ item.notes }}</td>
+                            <td>{{ item.status }}</td>
+                            <td>
+                                <a href="{% url 'inventory:incoming_stock_edit' item.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'inventory:incoming_stock_delete' item.id %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% if item.status == '待入库' %}
+                                <a href="{% url 'inventory:incoming_stock_approve' item.id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">暂无入库途中产品记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除选中的入库途中产品记录吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">确认删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 确认入库模态框 -->
+<div class="modal fade" id="approveConfirmModal" tabindex="-1" aria-labelledby="approveConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approveConfirmModalLabel">确认入库</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要将选中的入库途中产品记录确认为已入库吗？此操作将创建相应的库存变动记录。
+                <p class="text-warning mt-2">注意：只有"待入库"状态的记录会被处理，其他状态的记录将被跳过。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmApproveBtn">确认入库</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // 初始化DataTable
+        var table = $('#incoming-stock-table').DataTable({
+            language: {
+                url: "{% static 'vendor/datatables/zh-CN.json' %}"
+            },
+            order: [[4, 'desc']], // 按预计到达日期降序排序
+            responsive: true,
+            columnDefs: [
+                { orderable: false, targets: [0, 7] } // 禁用第一列(复选框)和最后一列(操作)的排序
+            ]
+        });
+        
+        // 全选/取消全选
+        $('#selectAll').on('click', function() {
+            var isChecked = $(this).prop('checked');
+            $('.item-checkbox:visible').prop('checked', isChecked);
+            updateButtonState();
+        });
+        
+        // 单个选择
+        $(document).on('click', '.item-checkbox', function() {
+            updateButtonState();
+            
+            // 如果取消选中某个项，也要取消全选框
+            if (!$(this).prop('checked')) {
+                $('#selectAll').prop('checked', false);
+            }
+            
+            // 如果所有可见的复选框都被选中，则选中全选框
+            if ($('.item-checkbox:visible:checked').length === $('.item-checkbox:visible').length) {
+                $('#selectAll').prop('checked', true);
+            }
+        });
+        
+        // 更新按钮状态
+        function updateButtonState() {
+            var selectedCount = $('.item-checkbox:checked').length;
+            var hasSelectedPending = false;
+            
+            // 检查是否有待入库状态的记录被选中
+            $('.item-checkbox:checked').each(function() {
+                var status = $(this).closest('tr').find('td:nth-child(7)').text().trim();
+                if (status === '待入库') {
+                    hasSelectedPending = true;
+                    return false; // 跳出循环
+                }
+            });
+            
+            // 更新按钮状态
+            $('#batchDeleteBtn').prop('disabled', selectedCount === 0);
+            $('#batchApproveBtn').prop('disabled', !hasSelectedPending);
+        }
+        
+        // 确认删除按钮点击事件
+        $('#confirmDeleteBtn').on('click', function() {
+            $('#actionType').val('delete');
+            submitBatchForm();
+        });
+        
+        // 确认入库按钮点击事件
+        $('#confirmApproveBtn').on('click', function() {
+            $('#actionType').val('approve');
+            submitBatchForm();
+        });
+        
+        // 提交批量操作表单
+        function submitBatchForm() {
+            // 清除表单中可能存在的旧数据
+            $('#batchForm').find('input[name="selected_items"]').remove();
+            
+            // 添加选中的项目ID
+            $('.item-checkbox:checked').each(function() {
+                var itemId = $(this).val();
+                $('#batchForm').append('<input type="hidden" name="selected_items" value="' + itemId + '">');
+            });
+            
+            // 提交表单
+            $('#batchForm').submit();
+        }
+        
+        // 页面加载时更新按钮状态
+        updateButtonState();
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,49 @@
+<div id="layoutSidenav_nav">
+    <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+        <div class="sb-sidenav-menu">
+            <div class="nav">
+                <div class="sb-sidenav-menu-heading">核心功能</div>
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'inventory:dashboard' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                    仪表盘
+                </a>
+                
+                <div class="sb-sidenav-menu-heading">库存管理</div>
+                <a class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inventory:product_list' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-box"></i></div>
+                    产品管理
+                </a>
+                <a class="nav-link {% if 'warehouse' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-warehouse"></i></div>
+                    仓库管理
+                </a>
+                <a class="nav-link {% if 'movement' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inventory:stock_movement_list' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-exchange-alt"></i></div>
+                    库存变动
+                </a>
+                <a class="nav-link {% if 'incoming_stock' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'inventory:incoming_stock_list' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-truck-loading"></i></div>
+                    入库途中产品
+                </a>
+                <a class="nav-link {% if request.resolver_match.url_name == 'historical_stock' %}active{% endif %}" href="{% url 'inventory:historical_stock' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
+                    历史库存
+                </a>
+                
+                <div class="sb-sidenav-menu-heading">系统</div>
+                <a class="nav-link" href="{% url 'admin:index' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-cog"></i></div>
+                    管理后台
+                </a>
+                <a class="nav-link" href="{% url 'logout' %}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-sign-out-alt"></i></div>
+                    退出登录
+                </a>
+            </div>
+        </div>
+        <div class="sb-sidenav-footer">
+            <div class="small">当前用户:</div>
+            {{ request.user.username }}
+        </div>
+    </nav>
+</div> 

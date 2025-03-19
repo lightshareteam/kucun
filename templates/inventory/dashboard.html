@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load inventory_filters %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">仪表盘</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">首页</li>
+    </ol>
+    
+    {% include 'partials/messages.html' %}
+    
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_products }}</h5>
+                            <div class="small">产品总数</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-box fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}">查看详情</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_warehouses }}</h5>
+                            <div class="small">仓库总数</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-warehouse fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:warehouse_list' %}">查看详情</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ total_incoming_stock }}</h5>
+                            <div class="small">入库途中产品</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-truck-loading fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:incoming_stock_list' %}">查看详情</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 仓库统计和低库存警告 -->
+    <div class="row">
+        <!-- 仓库统计 -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-warehouse me-1"></i>
+                    仓库库存统计
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>仓库名称</th>
+                                    <th>仓库代码</th>
+                                    <th>当前库存</th>
+                                    <th>入库途中</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in warehouse_stats %}
+                                <tr>
+                                    <td>{{ stat.warehouse.name }}</td>
+                                    <td>{{ stat.warehouse.code }}</td>
+                                    <td>{{ stat.total_stock }}</td>
+                                    <td>{{ stat.incoming_count }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">暂无仓库数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 低库存警告 -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    低库存警告
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>产品SKU</th>
+                                    <th>当前库存</th>
+                                    <th>库存阈值</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in low_stock_products %}
+                                <tr>
+                                    <td>{{ product.sku }}</td>
+                                    <td>{{ product.current_stock }}</td>
+                                    <td>{{ product.low_stock_threshold }}</td>
+                                    <td>
+                                        <a href="{% url 'inventory:product_edit' product.id %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">暂无低库存产品</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
