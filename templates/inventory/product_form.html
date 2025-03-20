@@ -29,6 +29,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
+                            {{ form.series|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.season|as_crispy_field }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             {{ form.weight|as_crispy_field }}
                         </div>
                         <div class="col-md-6">
@@ -64,6 +72,8 @@
                     <li><strong>店铺SKU:</strong> 产品的店铺库存单位编号</li>
                     <li><strong>FNSKU:</strong> 亚马逊仓库商品编号</li>
                     <li><strong>产品SKU:</strong> 产品的通用SKU编号</li>
+                    <li><strong>系列:</strong> 产品所属的系列名称</li>
+                    <li><strong>季节:</strong> 产品适用的季节</li>
                     <li><strong>重量:</strong> 产品重量（磅/lb）</li>
                     <li><strong>尺寸:</strong> 产品的长、宽、高（英寸/inch）</li>
                     <li><strong>库存阈值:</strong> 当库存低于此值时会在仪表盘显示警告</li>

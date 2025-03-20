@@ -4,10 +4,12 @@ from .models import Product, StockMovement, Warehouse, IncomingStock, Production
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['sku', 'fnsku', 'name', 'weight', 'length', 'width', 'height', 'low_stock_threshold']
+        fields = ['sku', 'fnsku', 'name', 'series', 'season', 'weight', 'length', 'width', 'height', 'low_stock_threshold']
         labels = {
             'sku': '店铺SKU',
             'name': '产品SKU',
+            'series': '系列',
+            'season': '季节',
             'weight': '重量(lb)',
             'length': '长度(inch)',
             'width': '宽度(inch)',
@@ -18,6 +20,8 @@ class ProductForm(forms.ModelForm):
             'sku': forms.TextInput(attrs={'class': 'form-control'}),
             'fnsku': forms.TextInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'series': forms.TextInput(attrs={'class': 'form-control'}),
+            'season': forms.TextInput(attrs={'class': 'form-control'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'length': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'width': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),

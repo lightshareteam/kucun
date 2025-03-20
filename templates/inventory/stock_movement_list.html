@@ -32,11 +32,66 @@
                             <th>
                                 <input type="checkbox" id="select-all" class="form-check-input">
                             </th>
-                            <th>日期</th>
-                            <th>产品</th>
-                            <th>仓库</th>
-                            <th>类型</th>
-                            <th>数量</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'date' %}-{% endif %}date" class="text-decoration-none text-dark">
+                                    日期
+                                    {% if sort_by == 'date' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-date' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'product__name' %}-{% endif %}product__name" class="text-decoration-none text-dark">
+                                    产品
+                                    {% if sort_by == 'product__name' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-product__name' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'warehouse__name' %}-{% endif %}warehouse__name" class="text-decoration-none text-dark">
+                                    仓库
+                                    {% if sort_by == 'warehouse__name' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-warehouse__name' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'movement_type' %}-{% endif %}movement_type" class="text-decoration-none text-dark">
+                                    类型
+                                    {% if sort_by == 'movement_type' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-movement_type' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'quantity' %}-{% endif %}quantity" class="text-decoration-none text-dark">
+                                    数量
+                                    {% if sort_by == 'quantity' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-quantity' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>备注</th>
                             <th>操作</th>
                         </tr>

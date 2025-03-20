@@ -19,6 +19,8 @@ class Product(models.Model):
     sku = models.CharField('SKU', max_length=100, unique=True)
     fnsku = models.CharField('FNSKU', max_length=100, blank=True)
     name = models.CharField('产品名称', max_length=200)
+    series = models.CharField('系列', max_length=100, blank=True)
+    season = models.CharField('季节', max_length=100, blank=True)
     weight = models.DecimalField('重量(lb)', max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     length = models.DecimalField('长度(inch)', max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     width = models.DecimalField('宽度(inch)', max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])

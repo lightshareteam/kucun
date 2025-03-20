@@ -23,8 +23,21 @@ def product_list(request):
     # 获取搜索参数
     search_query = request.GET.get('search', '')
     
-    # 基础查询集
-    products = Product.objects.all()
+    # 获取排序参数
+    sort_by = request.GET.get('sort', 'sku')  # 默认按店铺SKU排序
+    
+    # 确定是否是数据库字段的排序
+    db_sort_fields = ['sku', '-sku', 'name', '-name', 'weight', '-weight', 
+                     'length', '-length', 'width', '-width', 'height', '-height',
+                     'low_stock_threshold', '-low_stock_threshold']
+    
+    is_db_sort = sort_by in db_sort_fields
+    
+    # 如果是数据库字段排序，直接使用ORDER BY
+    if is_db_sort:
+        products = Product.objects.all().order_by(sort_by)
+    else:
+        products = Product.objects.all().order_by('sku')  # 默认排序，后面会重新排序
     
     # 如果有搜索查询，过滤产品
     if search_query:
@@ -50,6 +63,8 @@ def product_list(request):
     product_incoming_stock = {}
     # 预先计算每个产品的生产订单剩余数量
     product_production_orders = {}
+    # 存储每个产品的总库存
+    product_total_stock = {}
     
     # 获取所有待入库的入库途中产品
     incoming_stocks = IncomingStock.objects.filter(status='待入库')
@@ -70,6 +85,9 @@ def product_list(request):
         # 计算每个仓库的库存
         for warehouse in warehouses:
             product_warehouse_stock[product.id][warehouse.id] = product.get_stock_by_warehouse(warehouse)
+        
+        # 存储总库存
+        product_total_stock[product.id] = product.total_stock
     
     # 计算每个产品在GA和CA的在途数量
     for incoming in incoming_stocks:
@@ -85,6 +103,39 @@ def product_list(request):
         if order.product.id in product_production_orders:
             product_production_orders[order.product.id] += order.remaining_quantity
     
+    # 针对非数据库字段的排序
+    if not is_db_sort:
+        # 按总库存排序
+        if sort_by == 'total_stock':
+            products = sorted(products, key=lambda p: product_total_stock.get(p.id, 0))
+        elif sort_by == '-total_stock':
+            products = sorted(products, key=lambda p: product_total_stock.get(p.id, 0), reverse=True)
+        # 按GA仓库库存排序
+        elif sort_by == 'ga_stock' and ga_warehouse:
+            products = sorted(products, key=lambda p: product_warehouse_stock.get(p.id, {}).get(ga_warehouse.id, 0))
+        elif sort_by == '-ga_stock' and ga_warehouse:
+            products = sorted(products, key=lambda p: product_warehouse_stock.get(p.id, {}).get(ga_warehouse.id, 0), reverse=True)
+        # 按CA仓库库存排序
+        elif sort_by == 'ca_stock' and ca_warehouse:
+            products = sorted(products, key=lambda p: product_warehouse_stock.get(p.id, {}).get(ca_warehouse.id, 0))
+        elif sort_by == '-ca_stock' and ca_warehouse:
+            products = sorted(products, key=lambda p: product_warehouse_stock.get(p.id, {}).get(ca_warehouse.id, 0), reverse=True)
+        # 按GA在途排序
+        elif sort_by == 'ga_incoming':
+            products = sorted(products, key=lambda p: product_incoming_stock.get(p.id, {}).get('GA', 0))
+        elif sort_by == '-ga_incoming':
+            products = sorted(products, key=lambda p: product_incoming_stock.get(p.id, {}).get('GA', 0), reverse=True)
+        # 按CA在途排序
+        elif sort_by == 'ca_incoming':
+            products = sorted(products, key=lambda p: product_incoming_stock.get(p.id, {}).get('CA', 0))
+        elif sort_by == '-ca_incoming':
+            products = sorted(products, key=lambda p: product_incoming_stock.get(p.id, {}).get('CA', 0), reverse=True)
+        # 按生产订单数量排序
+        elif sort_by == 'production_orders':
+            products = sorted(products, key=lambda p: product_production_orders.get(p.id, 0))
+        elif sort_by == '-production_orders':
+            products = sorted(products, key=lambda p: product_production_orders.get(p.id, 0), reverse=True)
+    
     return render(request, 'inventory/product_list.html', {
         'products': products,
         'warehouses': warehouses,
@@ -94,6 +145,7 @@ def product_list(request):
         'search_query': search_query,  # 传递搜索查询到模板
         'ga_warehouse': ga_warehouse,
         'ca_warehouse': ca_warehouse,
+        'sort_by': sort_by,  # 传递排序参数到模板
     })
 
 @login_required
@@ -247,8 +299,34 @@ def warehouse_batch_delete(request):
 
 @login_required
 def stock_movement_list(request):
-    movements = StockMovement.objects.all().order_by('-date', '-created_at')
-    return render(request, 'inventory/stock_movement_list.html', {'movements': movements})
+    # 获取排序参数
+    sort_by = request.GET.get('sort', '-date')  # 默认按日期降序排序
+    
+    # 确保排序字段有效
+    valid_sort_fields = ['date', '-date', 'product__sku', '-product__sku', 'product__name', '-product__name', 
+                        'warehouse__name', '-warehouse__name', 'movement_type', '-movement_type', 
+                        'quantity', '-quantity', 'created_at', '-created_at']
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date'  # 如果排序字段无效，回退到默认排序
+    
+    # 应用排序
+    movements = StockMovement.objects.all().order_by(sort_by)
+    
+    # 确定每个字段的排序方向
+    sort_directions = {
+        'date': 'asc' if sort_by == 'date' else 'desc',
+        'product': 'asc' if sort_by in ['product__sku', 'product__name'] else 'desc',
+        'warehouse': 'asc' if sort_by == 'warehouse__name' else 'desc',
+        'movement_type': 'asc' if sort_by == 'movement_type' else 'desc',
+        'quantity': 'asc' if sort_by == 'quantity' else 'desc',
+    }
+    
+    return render(request, 'inventory/stock_movement_list.html', {
+        'movements': movements,
+        'sort_by': sort_by,
+        'sort_directions': sort_directions,
+    })
 
 @login_required
 def stock_movement_create(request):
@@ -364,10 +442,17 @@ def dashboard(request):
     
     for warehouse in warehouses:
         # 计算该仓库的总库存数量
-        total_stock = StockMovement.objects.filter(warehouse=warehouse).aggregate(
-            total=Sum('quantity', filter=Q(movement_type='IN')) - 
-                  Sum('quantity', filter=Q(movement_type='OUT'))
-        )['total'] or 0
+        total_in = StockMovement.objects.filter(
+            warehouse=warehouse,
+            movement_type='IN'
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        total_out = StockMovement.objects.filter(
+            warehouse=warehouse,
+            movement_type='OUT'
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        total_stock = total_in - total_out
         
         # 计算该仓库的入库途中产品数量
         incoming_count = IncomingStock.objects.filter(
@@ -533,7 +618,7 @@ def download_product_template(request):
     ws.title = "产品导入模板"
     
     # 设置列标题
-    headers = ['店铺SKU', 'FNSKU', '产品SKU', '重量(lb)', '长度(inch)', '宽度(inch)', '高度(inch)', '亚特兰大仓库存', '加州仓库存', '总库存(参考)']
+    headers = ['店铺SKU', 'FNSKU', '产品SKU', '系列', '季节', '重量(lb)', '长度(inch)', '宽度(inch)', '高度(inch)', '亚特兰大仓库存', '加州仓库存', '总库存(参考)']
     
     # 写入标题行
     for col_num, header in enumerate(headers, 1):
@@ -542,7 +627,7 @@ def download_product_template(request):
     
     # 添加示例数据
     example_data = [
-        'EXAMPLE-SKU', 'X00EXAMPLE', 'EXAMPLE-SKU', 5, 10, 10, 10, 100, 50, '=SUM(H2:I2)'
+        'EXAMPLE-SKU', 'X00EXAMPLE', 'EXAMPLE-SKU', '系列A', '2023秋季', 5, 10, 10, 10, 100, 50, '=SUM(J2:K2)'
     ]
     
     for col_num, value in enumerate(example_data, 1):
@@ -610,6 +695,10 @@ def import_products(request):
                     # 获取产品SKU（如果存在）
                     product_sku = str(row.get('产品SKU', '')) if pd.notna(row.get('产品SKU', '')) else sku
                     
+                    # 获取系列和季节（如果存在）
+                    series = str(row.get('系列', '')) if pd.notna(row.get('系列', '')) else ''
+                    season = str(row.get('季节', '')) if pd.notna(row.get('季节', '')) else ''
+                    
                     # 验证数值字段
                     try:
                         weight = float(row['重量(lb)'])
@@ -669,6 +758,8 @@ def import_products(request):
                     if existing_product:
                         existing_product.fnsku = fnsku
                         existing_product.name = product_sku
+                        existing_product.series = series
+                        existing_product.season = season
                         existing_product.weight = weight
                         existing_product.length = length
                         existing_product.width = width
@@ -681,6 +772,8 @@ def import_products(request):
                             sku=sku,
                             fnsku=fnsku,
                             name=product_sku,  # 使用产品SKU作为产品名称
+                            series=series,
+                            season=season,
                             weight=weight,
                             length=length,
                             width=width,
@@ -758,7 +851,7 @@ def export_products(request):
     california_warehouse = Warehouse.objects.get(code='CA')
     
     # 设置表头 - 确保与导入模板一致
-    headers = ['店铺SKU', 'FNSKU', '产品SKU', '重量(lb)', '长度(inch)', '宽度(inch)', '高度(inch)', '亚特兰大仓库存', '加州仓库存', '总库存(参考)']
+    headers = ['店铺SKU', 'FNSKU', '产品SKU', '系列', '季节', '重量(lb)', '长度(inch)', '宽度(inch)', '高度(inch)', '亚特兰大仓库存', '加州仓库存', '总库存(参考)']
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col)
         cell.value = header
@@ -776,13 +869,15 @@ def export_products(request):
         ws.cell(row=row, column=1, value=product.sku)
         ws.cell(row=row, column=2, value=product.fnsku)
         ws.cell(row=row, column=3, value=product.name)
-        ws.cell(row=row, column=4, value=float(product.weight))
-        ws.cell(row=row, column=5, value=float(product.length))
-        ws.cell(row=row, column=6, value=float(product.width))
-        ws.cell(row=row, column=7, value=float(product.height))
-        ws.cell(row=row, column=8, value=atlanta_stock)
-        ws.cell(row=row, column=9, value=california_stock)
-        ws.cell(row=row, column=10, value=total_stock)
+        ws.cell(row=row, column=4, value=product.series)
+        ws.cell(row=row, column=5, value=product.season)
+        ws.cell(row=row, column=6, value=float(product.weight))
+        ws.cell(row=row, column=7, value=float(product.length))
+        ws.cell(row=row, column=8, value=float(product.width))
+        ws.cell(row=row, column=9, value=float(product.height))
+        ws.cell(row=row, column=10, value=atlanta_stock)
+        ws.cell(row=row, column=11, value=california_stock)
+        ws.cell(row=row, column=12, value=total_stock)
     
     # 设置列宽
     for col in range(1, len(headers) + 1):
@@ -878,9 +973,29 @@ def historical_stock(request):
 @login_required
 def incoming_stock_list(request):
     """入库途中产品列表视图"""
-    incoming_stock_list = IncomingStock.objects.all().order_by('-expected_arrival_date')
+    # 获取排序参数
+    sort_by = request.GET.get('sort', '-expected_arrival_date')  # 默认按预计入仓时间降序排序
+    
+    # 确保排序字段有效
+    valid_sort_fields = [
+        'expected_arrival_date', '-expected_arrival_date', 
+        'product__sku', '-product__sku', 
+        'product__name', '-product__name',
+        'warehouse__name', '-warehouse__name',
+        'quantity', '-quantity',
+        'status', '-status',
+        'created_at', '-created_at'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-expected_arrival_date'  # 如果排序字段无效，回退到默认排序
+    
+    # 应用排序
+    incoming_stock_list = IncomingStock.objects.all().order_by(sort_by)
+    
     return render(request, 'inventory/incoming_stock_list.html', {
         'incoming_stock_list': incoming_stock_list,
+        'sort_by': sort_by,
     })
 
 @login_required
@@ -1693,7 +1808,24 @@ def incoming_stock_batch_action(request):
 @login_required
 def production_order_list(request):
     """生产订单列表视图"""
-    production_orders = ProductionOrder.objects.all()
+    # 获取排序参数
+    sort_by = request.GET.get('sort', '-created_at')  # 默认按创建时间降序排序
+    
+    # 确保排序字段有效
+    valid_sort_fields = [
+        'created_at', '-created_at', 
+        'product__sku', '-product__sku', 
+        'product__name', '-product__name',
+        'order_number', '-order_number',
+        'quantity', '-quantity',
+        'remaining_quantity', '-remaining_quantity'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-created_at'  # 如果排序字段无效，回退到默认排序
+    
+    # 应用排序
+    production_orders = ProductionOrder.objects.all().order_by(sort_by)
     
     # 计算每个产品的在途数量
     products = Product.objects.all()
@@ -1722,6 +1854,7 @@ def production_order_list(request):
     return render(request, 'inventory/production_order_list.html', {
         'production_orders': production_orders,
         'product_incoming_stock': product_incoming_stock,
+        'sort_by': sort_by,
     })
 
 @login_required
@@ -1760,8 +1893,8 @@ def production_order_edit(request, pk):
             form.save()
             messages.success(request, '生产订单更新成功！')
             return redirect('inventory:production_order_list')
-        else:
-            form = ProductionOrderForm(instance=production_order)
+    else:
+        form = ProductionOrderForm(instance=production_order)
     
     return render(request, 'inventory/production_order_form.html', {'form': form})
 

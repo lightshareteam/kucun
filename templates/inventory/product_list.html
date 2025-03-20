@@ -64,22 +64,160 @@
                             <th>
                                 <input type="checkbox" id="select-all" class="form-check-input">
                             </th>
-                            <th>店铺SKU</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'sku' %}-{% endif %}sku{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    店铺SKU
+                                    {% if sort_by == 'sku' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-sku' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>FNSKU</th>
-                            <th>产品SKU</th>
-                            <th>重量(lb)</th>
-                            <th>尺寸(inch)</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'name' %}-{% endif %}name{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    产品SKU
+                                    {% if sort_by == 'name' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-name' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'series' %}-{% endif %}series{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    系列
+                                    {% if sort_by == 'series' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-series' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'season' %}-{% endif %}season{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    季节
+                                    {% if sort_by == 'season' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-season' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'weight' %}-{% endif %}weight{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    重量(lb)
+                                    {% if sort_by == 'weight' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-weight' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'length' %}-{% endif %}length{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    尺寸(inch)
+                                    {% if sort_by == 'length' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-length' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             {% for warehouse in warehouses %}
-                            <th>{{ warehouse.name }}</th>
+                            <th>
+                                {% if warehouse.code == 'GA' %}
+                                <a href="?sort={% if sort_by == 'ga_stock' %}-{% endif %}ga_stock{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    {{ warehouse.name }}
+                                    {% if sort_by == 'ga_stock' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-ga_stock' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                                {% elif warehouse.code == 'CA' %}
+                                <a href="?sort={% if sort_by == 'ca_stock' %}-{% endif %}ca_stock{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    {{ warehouse.name }}
+                                    {% if sort_by == 'ca_stock' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-ca_stock' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                                {% else %}
+                                {{ warehouse.name }}
+                                {% endif %}
+                            </th>
                             {% endfor %}
-                            <th>总库存</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'total_stock' %}-{% endif %}total_stock{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    总库存
+                                    {% if sort_by == 'total_stock' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-total_stock' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             {% if ga_warehouse %}
-                            <th>GA在途</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'ga_incoming' %}-{% endif %}ga_incoming{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    GA在途
+                                    {% if sort_by == 'ga_incoming' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-ga_incoming' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             {% endif %}
                             {% if ca_warehouse %}
-                            <th>CA在途</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'ca_incoming' %}-{% endif %}ca_incoming{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    CA在途
+                                    {% if sort_by == 'ca_incoming' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-ca_incoming' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             {% endif %}
-                            <th>生产订单</th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'production_orders' %}-{% endif %}production_orders{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    生产订单
+                                    {% if sort_by == 'production_orders' %}
+                                    <i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-production_orders' %}
+                                    <i class="fas fa-sort-down"></i>
+                                    {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -92,6 +230,8 @@
                             <td>{{ product.sku }}</td>
                             <td>{{ product.fnsku }}</td>
                             <td>{{ product.name }}</td>
+                            <td>{{ product.series }}</td>
+                            <td>{{ product.season }}</td>
                             <td>{{ product.weight }}</td>
                             <td>{{ product.length }} × {{ product.width }} × {{ product.height }}</td>
                             {% for warehouse in warehouses %}
